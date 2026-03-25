@@ -8,10 +8,15 @@ function normalizeSource(source?: string) {
   return source?.trim() || "formulario";
 }
 
+function normalizePhone(phone?: string) {
+  return (phone ?? "").replace(/\D/g, "");
+}
+
 function normalizeLead(payload: Partial<LeadPayload>) {
   return {
     name: payload.name?.trim() ?? "",
-    phone: payload.phone?.trim() ?? "",
+    phone: normalizePhone(payload.phone),
+    email: payload.email?.trim().toLowerCase() ?? "",
     device: payload.device?.trim() ?? "Não informado",
     message: payload.message?.trim() ?? "",
     status: payload.status?.trim() ?? "Não informado",
@@ -21,10 +26,14 @@ function normalizeLead(payload: Partial<LeadPayload>) {
   };
 }
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function isValidLead(lead: ReturnType<typeof normalizeLead>) {
   if (!lead.name || !lead.message) return false;
   if (lead.source === "chatbot") return Boolean(lead.device);
-  return Boolean(lead.phone);
+  return Boolean(lead.phone && lead.phone.length === 11 && isValidEmail(lead.email));
 }
 
 export async function POST(request: Request) {

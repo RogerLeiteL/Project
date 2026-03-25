@@ -1,6 +1,7 @@
 ﻿export type LeadPayload = {
   name: string;
   phone?: string;
+  email?: string;
   device: string;
   message: string;
   status?: string;

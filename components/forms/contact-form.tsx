@@ -10,9 +10,26 @@ import type { LeadPayload } from "@/types/leads";
 const initialForm = {
   name: "",
   phone: "",
+  email: "",
   device: "",
   message: "",
 };
+
+function formatPhone(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function isValidPhone(value: string) {
+  return value.replace(/\D/g, "").length === 11;
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
 
 function getLeadFeedback(reason?: string, status?: number, upstream?: string) {
   if (reason === "webhook_not_configured") {
@@ -38,18 +55,36 @@ export function ContactForm() {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const whatsappLink = useMemo(() => {
-    const composedMessage = `Olá! Meu nome é ${form.name || ""}. Telefone: ${form.phone || ""}. Equipamento: ${form.device || ""}. Problema: ${form.message || ""}`;
+    const composedMessage = `Olá! Meu nome é ${form.name || ""}. Telefone: ${form.phone || ""}. E-mail: ${form.email || ""}. Equipamento: ${form.device || ""}. Problema: ${form.message || ""}`;
     return getWhatsAppLink(composedMessage);
   }, [form]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!form.name.trim()) {
+      setFeedback("Preencha seu nome para continuar o atendimento.");
+      return;
+    }
+
+    if (!isValidPhone(form.phone)) {
+      setFeedback("Digite um telefone válido com DDD + 9 dígitos. Exemplo: (11) 97682-9270.");
+      return;
+    }
+
+    if (!isValidEmail(form.email)) {
+      setFeedback("Digite um e-mail válido para recebermos seu contato corretamente.");
+      return;
+    }
+
     setIsSubmitting(true);
     setFeedback(null);
 
     const pagePath = getPagePath();
     const leadPayload: LeadPayload = {
       ...form,
+      phone: form.phone.replace(/\D/g, ""),
+      email: form.email.trim(),
       device: form.device || "Não informado",
       pagePath,
       source: "contact_form",
@@ -89,6 +124,7 @@ export function ContactForm() {
           Nome
           <input
             required
+            autoComplete="name"
             value={form.name}
             onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"
@@ -99,14 +135,31 @@ export function ContactForm() {
           Telefone
           <input
             required
+            autoComplete="tel"
+            inputMode="numeric"
+            maxLength={15}
+            pattern="\(\d{2}\) \d{5}-\d{4}"
+            title="Digite um telefone com DDD e 9 dígitos. Exemplo: (11) 97682-9270"
             value={form.phone}
-            onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
+            onChange={(event) => setForm((prev) => ({ ...prev, phone: formatPhone(event.target.value) }))}
             className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"
-            placeholder="Seu WhatsApp para retorno"
+            placeholder="(11) 97682-9270"
           />
         </label>
       </div>
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <label className="grid gap-2 text-sm font-medium text-slate-700">
+          E-mail
+          <input
+            required
+            type="email"
+            autoComplete="email"
+            value={form.email}
+            onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"
+            placeholder="seuemail@exemplo.com"
+          />
+        </label>
         <label className="grid gap-2 text-sm font-medium text-slate-700">
           Equipamento
           <select
@@ -121,11 +174,11 @@ export function ContactForm() {
             <option value="Outro">Outro</option>
           </select>
         </label>
-        <div className="rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4 text-sm leading-7 text-slate-600">
-          <p className="font-semibold text-slate-950">Seu atendimento já sai mais adiantado</p>
-          <p className="mt-1">Ao enviar, seus dados podem ser registrados e o WhatsApp abre com a mensagem pronta para você não precisar repetir tudo de novo.</p>
-          <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-400">Retorno pelo WhatsApp: {businessInfo.whatsappDisplay}</p>
-        </div>
+      </div>
+      <div className="mt-5 rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4 text-sm leading-7 text-slate-600">
+        <p className="font-semibold text-slate-950">Seu atendimento já sai mais adiantado</p>
+        <p className="mt-1">Ao enviar, seus dados podem ser registrados e o WhatsApp abre com a mensagem pronta para você não precisar repetir tudo de novo.</p>
+        <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-400">Retorno pelo WhatsApp: {businessInfo.whatsappDisplay}</p>
       </div>
       <label className="mt-5 grid gap-2 text-sm font-medium text-slate-700">
         Descreva o problema

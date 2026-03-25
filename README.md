@@ -277,11 +277,11 @@ O backend normaliza e envia dados como estes:
 ```json
 {
   "name": "Nome do cliente",
-  "phone": "(11) 99999-9999",
+  "phone": "11999999999",
+  "email": "cliente@exemplo.com",
   "device": "Notebook",
   "message": "Notebook não liga",
   "status": "Não",
-  "urgency": "Sim",
   "submittedAt": "2026-03-25T12:00:00.000Z",
   "pagePath": "/contato",
   "source": "formulario",
@@ -317,25 +317,38 @@ O backend normaliza assim:
 ### 3. Script recomendado
 
 ```javascript
-const FORM_SHEET_NAME = "Leads Formulario";
-const CHATBOT_SHEET_NAME = "Leads Chatbot";
-const WEBHOOK_SECRET = "sua-chave-opcional";
+var FORM_SHEET_NAME = "Leads Formulario";
+var CHATBOT_SHEET_NAME = "Leads Chatbot";
+var WEBHOOK_SECRET = "sua-chave-opcional";
+
+function doGet() {
+  return jsonResponse({
+    ok: true,
+    app: "buutech-webhook"
+  });
+}
 
 function doPost(e) {
   try {
-    const body = JSON.parse(e.postData.contents || "{}");
-    const secret =
-      body.secret ||
-      e.parameter.secret ||
-      (e.headers && e.headers["x-webhook-secret"]);
+    var raw = "{}";
 
-    if (WEBHOOK_SECRET && secret !== WEBHOOK_SECRET) {
-      return jsonResponse({ ok: false, error: "unauthorized" }, 401);
+    if (e && e.postData && e.postData.contents) {
+      raw = e.postData.contents;
     }
 
-    const source = body.source || "formulario";
-    const sheetName = source === "chatbot" ? CHATBOT_SHEET_NAME : FORM_SHEET_NAME;
-    const sheet = getSheet(sheetName);
+    var body = JSON.parse(raw);
+    var secret = body.secret || "";
+
+    if (WEBHOOK_SECRET && secret !== WEBHOOK_SECRET) {
+      return jsonResponse({
+        ok: false,
+        error: "unauthorized"
+      });
+    }
+
+    var source = body.source || "formulario";
+    var sheetName = source === "chatbot" ? CHATBOT_SHEET_NAME : FORM_SHEET_NAME;
+    var sheet = getSheet(sheetName);
 
     ensureHeader(sheet);
 
@@ -343,33 +356,33 @@ function doPost(e) {
       new Date(),
       body.name || "",
       body.phone || "",
+      body.email || "",
       body.device || "",
       body.message || "",
       body.status || "",
-      body.urgency || "",
       body.pagePath || "",
       source,
       body.company || "",
       body.timestamp || "",
-      buildRemarketingTag(body),
+      buildRemarketingTag(body)
     ]);
 
-    return jsonResponse({ ok: true, sheet: sheetName });
+    return jsonResponse({
+      ok: true,
+      sheet: sheetName
+    });
   } catch (error) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: "unexpected_error",
-        message: String(error),
-      },
-      500
-    );
+    return jsonResponse({
+      ok: false,
+      error: "unexpected_error",
+      message: String(error)
+    });
   }
 }
 
 function getSheet(sheetName) {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(sheetName);
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getSheetByName(sheetName);
 
   if (!sheet) {
     sheet = spreadsheet.insertSheet(sheetName);
@@ -385,23 +398,23 @@ function ensureHeader(sheet) {
     "Recebido em",
     "Nome",
     "Telefone",
+    "E-mail",
     "Aparelho",
     "Problema",
     "Liga?",
-    "Urgência",
-    "Página",
+    "Pagina",
     "Origem",
     "Empresa",
     "Timestamp ISO",
-    "Tag Remarketing",
+    "Tag Remarketing"
   ]);
 }
 
 function buildRemarketingTag(data) {
-  const parts = [
+  var parts = [
     data.source || "site",
     data.device || "sem-aparelho",
-    data.urgency === "Sim" ? "urgente" : "nao-urgente",
+    data.status || "sem-status"
   ];
 
   return parts.join(" | ");
@@ -441,6 +454,8 @@ A chave em `LEADS_WEBHOOK_SECRET` deve ser igual à constante `WEBHOOK_SECRET` d
 3. Envie um lead pelo formulário
 4. Verifique se ele apareceu na planilha
 5. Teste o chatbot também
+
+Se quiser que o e-mail do formulário apareça na planilha, este script já cria a coluna E-mail automaticamente.
 
 ## Como publicar na Vercel
 
@@ -552,5 +567,6 @@ Arquivos mais importantes do projeto:
 - `data/testimonials.ts`
 - `data/content.ts`
 - `README.md`
+
 
 
