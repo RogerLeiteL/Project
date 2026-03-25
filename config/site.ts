@@ -37,7 +37,7 @@ export const siteConfig = {
     "assistência técnica de informática em Caieiras",
   ],
   analytics: {
-    gaMeasurementId: "G-XXXXXXXXXX",
+    gaMeasurementId: "G-2LQ8JYZ0PM",
     clarityProjectId: "CLARITY_PROJECT_ID",
   },
   integrations: {
