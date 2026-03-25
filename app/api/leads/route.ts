@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     if (!isValidLead(lead)) {
       return NextResponse.json(
-        { ok: false, error: "invalid_payload" },
+        { ok: false, saved: false, error: "invalid_payload" },
         { status: 400 }
       );
     }
@@ -83,6 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           ok: false,
+          saved: false,
           error: "webhook_failed",
           status: response.status,
         },
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, saved: true });
   } catch {
     return NextResponse.json(
-      { ok: false, error: "unexpected_error" },
+      { ok: false, saved: false, error: "unexpected_error" },
       { status: 500 }
     );
   }

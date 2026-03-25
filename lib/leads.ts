@@ -1,13 +1,32 @@
 ﻿import type { LeadPayload } from "@/types/leads";
 
-export async function saveLead(data: LeadPayload) {
+type SaveLeadResult = {
+  ok: boolean;
+  saved: boolean;
+  reason?: string;
+};
+
+export async function saveLead(data: LeadPayload): Promise<SaveLeadResult> {
   const response = await fetch("/api/leads", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+    keepalive: true,
   });
 
-  return response.ok;
+  let payload: Partial<SaveLeadResult> | null = null;
+
+  try {
+    payload = (await response.json()) as Partial<SaveLeadResult>;
+  } catch {
+    payload = null;
+  }
+
+  return {
+    ok: response.ok,
+    saved: Boolean(payload?.saved ?? response.ok),
+    reason: payload?.reason,
+  };
 }

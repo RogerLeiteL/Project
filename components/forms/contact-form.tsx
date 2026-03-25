@@ -43,24 +43,18 @@ export function ContactForm() {
       device_type: form.device || "not_selected",
     });
 
-    const popup = window.open("", "_blank", "noopener,noreferrer");
-
     try {
-      const leadSaved = await saveLead(leadPayload);
-      if (!leadSaved) {
-        setFeedback("Lead não pôde ser salvo no Google Sheets, mas o atendimento no WhatsApp será aberto normalmente.");
+      const result = await saveLead(leadPayload);
+
+      if (!result.saved) {
+        setFeedback("O lead não foi confirmado no Google Sheets, mas o WhatsApp será aberto normalmente. Verifique se o webhook foi publicado corretamente.");
       }
     } catch {
-      setFeedback("Não foi possível confirmar o salvamento do lead, mas o atendimento no WhatsApp continuará normalmente.");
+      setFeedback("Não foi possível confirmar o envio para o Google Sheets, mas o atendimento no WhatsApp continuará normalmente.");
     } finally {
-      if (popup) {
-        popup.location.href = whatsappLink;
-      } else {
-        window.open(whatsappLink, "_blank", "noopener,noreferrer");
-      }
-
       setIsSubmitting(false);
       setForm(initialForm);
+      window.location.href = whatsappLink;
     }
   }
 
