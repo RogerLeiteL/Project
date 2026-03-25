@@ -38,7 +38,7 @@ export const siteConfig = {
   ],
   analytics: {
     gaMeasurementId: "G-2LQ8JYZ0PM",
-    clarityProjectId: "CLARITY_PROJECT_ID",
+    clarityProjectId: "w1a68m214j",
   },
   integrations: {
     leadsWebhookEnv: "LEADS_WEBHOOK_URL",
