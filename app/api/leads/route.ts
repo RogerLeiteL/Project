@@ -3,14 +3,8 @@ import { siteConfig } from "@/config/site";
 import type { LeadPayload } from "@/types/leads";
 
 function normalizeSource(source?: string) {
-  if (source === "chatbot") {
-    return "chatbot";
-  }
-
-  if (source === "contact_form" || source === "site_form") {
-    return "formulario";
-  }
-
+  if (source === "chatbot") return "chatbot";
+  if (source === "contact_form" || source === "site_form") return "formulario";
   return source?.trim() || "formulario";
 }
 
@@ -29,14 +23,8 @@ function normalizeLead(payload: Partial<LeadPayload>) {
 }
 
 function isValidLead(lead: ReturnType<typeof normalizeLead>) {
-  if (!lead.name || !lead.message) {
-    return false;
-  }
-
-  if (lead.source === "chatbot") {
-    return Boolean(lead.device && lead.urgency);
-  }
-
+  if (!lead.name || !lead.message) return false;
+  if (lead.source === "chatbot") return Boolean(lead.device && lead.urgency);
   return Boolean(lead.phone);
 }
 
@@ -47,7 +35,7 @@ export async function POST(request: Request) {
 
     if (!isValidLead(lead)) {
       return NextResponse.json(
-        { ok: false, saved: false, error: "invalid_payload" },
+        { ok: false, saved: false, error: "invalid_payload", reason: "invalid_payload" },
         { status: 400 }
       );
     }
@@ -79,22 +67,32 @@ export async function POST(request: Request) {
       cache: "no-store",
     });
 
+    const responseText = await response.text();
+
     if (!response.ok) {
       return NextResponse.json(
         {
           ok: false,
           saved: false,
           error: "webhook_failed",
+          reason: "webhook_failed",
           status: response.status,
+          upstream: responseText.slice(0, 300),
         },
         { status: 502 }
       );
     }
 
-    return NextResponse.json({ ok: true, saved: true });
-  } catch {
+    return NextResponse.json({ ok: true, saved: true, reason: "saved" });
+  } catch (error) {
     return NextResponse.json(
-      { ok: false, saved: false, error: "unexpected_error" },
+      {
+        ok: false,
+        saved: false,
+        error: "unexpected_error",
+        reason: "unexpected_error",
+        message: String(error),
+      },
       { status: 500 }
     );
   }

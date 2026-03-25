@@ -4,6 +4,9 @@ type SaveLeadResult = {
   ok: boolean;
   saved: boolean;
   reason?: string;
+  status?: number;
+  upstream?: string;
+  message?: string;
 };
 
 export async function saveLead(data: LeadPayload): Promise<SaveLeadResult> {
@@ -26,7 +29,10 @@ export async function saveLead(data: LeadPayload): Promise<SaveLeadResult> {
 
   return {
     ok: response.ok,
-    saved: Boolean(payload?.saved ?? response.ok),
+    saved: Boolean(payload?.saved),
     reason: payload?.reason,
+    status: payload?.status,
+    upstream: payload?.upstream,
+    message: payload?.message,
   };
 }

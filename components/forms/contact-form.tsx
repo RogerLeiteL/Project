@@ -14,6 +14,24 @@ const initialForm = {
   message: "",
 };
 
+function getLeadFeedback(reason?: string, status?: number, upstream?: string) {
+  if (reason === "webhook_not_configured") {
+    return "O webhook de leads não está configurado na hospedagem. Cadastre LEADS_WEBHOOK_URL e LEADS_WEBHOOK_SECRET na Vercel e faça novo deploy.";
+  }
+
+  if (reason === "webhook_failed") {
+    const suffix = status ? ` Status do webhook: ${status}.` : "";
+    const detail = upstream ? ` Retorno: ${upstream}` : "";
+    return `O site tentou enviar o lead para o Google Sheets, mas o Apps Script recusou ou falhou.${suffix}${detail}`;
+  }
+
+  if (reason === "unexpected_error") {
+    return "O envio do lead falhou no servidor antes de chegar ao Google Sheets.";
+  }
+
+  return "O lead não foi confirmado no Google Sheets, mas o WhatsApp será aberto normalmente.";
+}
+
 export function ContactForm() {
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,7 +65,7 @@ export function ContactForm() {
       const result = await saveLead(leadPayload);
 
       if (!result.saved) {
-        setFeedback("O lead não foi confirmado no Google Sheets, mas o WhatsApp será aberto normalmente. Verifique se o webhook foi publicado corretamente.");
+        setFeedback(getLeadFeedback(result.reason, result.status, result.upstream));
       }
     } catch {
       setFeedback("Não foi possível confirmar o envio para o Google Sheets, mas o atendimento no WhatsApp continuará normalmente.");
