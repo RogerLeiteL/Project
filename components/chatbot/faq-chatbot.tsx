@@ -25,8 +25,6 @@ type DeviceOption = "Celular" | "Notebook" | "Computador";
 
 type StatusOption = "Sim" | "Não" | "Às vezes";
 
-type UrgencyOption = "Sim" | "Não";
-
 type ChatStep =
   | "home"
   | "faq"
@@ -34,7 +32,6 @@ type ChatStep =
   | "collect_device"
   | "collect_problem"
   | "collect_status"
-  | "collect_urgency"
   | "ready";
 
 type ChatLead = {
@@ -42,7 +39,6 @@ type ChatLead = {
   device: string;
   problem: string;
   status: string;
-  urgency: string;
 };
 
 const initialMessages: ChatMessage[] = [
@@ -57,7 +53,6 @@ const initialLead: ChatLead = {
   device: "",
   problem: "",
   status: "",
-  urgency: "",
 };
 
 const openingActions = [
@@ -82,7 +77,6 @@ function buildWhatsAppMessage(lead: ChatLead) {
     `Aparelho: ${lead.device}`,
     `Problema: ${lead.problem}`,
     `Ele liga? ${lead.status}`,
-    `Urgência: ${lead.urgency}`,
   ].join("\n");
 }
 
@@ -189,7 +183,6 @@ export function FaqChatbot() {
       device: nextLead.device,
       message: nextLead.problem,
       status: nextLead.status,
-      urgency: nextLead.urgency,
       submittedAt: new Date().toISOString(),
       pagePath: getPagePath(),
       source: "chatbot",
@@ -240,17 +233,10 @@ export function FaqChatbot() {
 
   function handleStatusSelect(status: StatusOption) {
     pushUserMessage(status);
-    setLead((prev) => ({ ...prev, status }));
-    setStep("collect_urgency");
-    queueBotMessages(["Entendi. É urgente?"]);
-  }
-
-  function handleUrgencySelect(urgency: UrgencyOption) {
-    pushUserMessage(urgency);
 
     const nextLead = {
       ...lead,
-      urgency,
+      status,
     };
 
     setLead(nextLead);
@@ -421,21 +407,6 @@ export function FaqChatbot() {
               </div>
             ) : null}
 
-            {step === "collect_urgency" ? (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {(["Sim", "Não"] as UrgencyOption[]).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => handleUrgencySelect(option)}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-brand hover:text-brand"
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
             {shouldShowInput ? (
               <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-3 shadow-[0_10px_24px_rgba(8,17,32,0.04)]">
                 <Search className="h-4 w-4 text-slate-400" />
@@ -503,7 +474,3 @@ export function FaqChatbot() {
     </div>
   );
 }
-
-
-
-

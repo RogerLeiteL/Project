@@ -15,7 +15,6 @@ function normalizeLead(payload: Partial<LeadPayload>) {
     device: payload.device?.trim() ?? "Não informado",
     message: payload.message?.trim() ?? "",
     status: payload.status?.trim() ?? "Não informado",
-    urgency: payload.urgency?.trim() ?? "Não informado",
     submittedAt: payload.submittedAt?.trim() ?? new Date().toISOString(),
     pagePath: payload.pagePath?.trim() ?? "/",
     source: normalizeSource(payload.source),
@@ -24,7 +23,7 @@ function normalizeLead(payload: Partial<LeadPayload>) {
 
 function isValidLead(lead: ReturnType<typeof normalizeLead>) {
   if (!lead.name || !lead.message) return false;
-  if (lead.source === "chatbot") return Boolean(lead.device && lead.urgency);
+  if (lead.source === "chatbot") return Boolean(lead.device);
   return Boolean(lead.phone);
 }
 
